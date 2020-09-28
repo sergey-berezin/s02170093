@@ -1,7 +1,7 @@
 ﻿using System;
 using DigitRecognitionLibrary;
 
-namespace RecognitionLibTest
+namespace RecognitionConsoleTest
 {
     class Test
     {
