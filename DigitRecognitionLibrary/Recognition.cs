@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 
-namespace HandwrittenDigitRecognitionLib
+namespace DigitRecognitionLibrary
 {
     public class Recognition
     {
@@ -17,8 +17,8 @@ namespace HandwrittenDigitRecognitionLib
         {
             if (!Directory.Exists(dir))
             {
-                // current directory is /bin/Debug/netcoreapp3.1 so we go 3 steps back
-                dir = @"../../../";
+                // current directory is RecognitionConsoleTest/bin/Debug/netcoreapp3.1 so we go 4 steps back
+                dir = @"../../../../DigitRecognitionLibrary";
             }
             string[] imagePaths = Directory.GetFiles(dir, "*.png");
             int count = imagePaths.Count();
@@ -28,18 +28,17 @@ namespace HandwrittenDigitRecognitionLib
             CancellationTokenSource ctsForEscapeThread = new CancellationTokenSource();
             var t = new Thread(() =>
             {
-                Console.WriteLine("Type ESCAPE to stop recognition.");  
+                Console.WriteLine("Type ESCAPE to stop recognition.");
                 while (true)
                 {
-                    // 1st way to break is to press ESCAPE and stop recognition
-                    var check = Console.ReadKey();
-                    if (check.Key == ConsoleKey.Escape)
+                    // 1st way to break is to wait until the last image goes to recognition
+                    if (ctsForEscapeThread.Token.IsCancellationRequested)
                     {
-                        ctsForThreadPool.Cancel();
                         break;
                     }
-                    // 2nd way to break is to wait until the last image goes to recognition
-                    if (ctsForEscapeThread.Token.IsCancellationRequested)
+                    // 2nd way to break is to press ESCAPE and stop recognition
+                    var check = Console.ReadKey();
+                    if (check.Key == ConsoleKey.Escape)
                     {
                         ctsForThreadPool.Cancel();
                         break;
@@ -115,8 +114,8 @@ namespace HandwrittenDigitRecognitionLib
                         NamedOnnxValue.CreateFromTensor("Input3", input)
                     };
 
-            // current directory is /bin/Debug/netcoreapp3.1 so we go 3 steps back
-            using var session = new InferenceSession(@"../../../mnist-8.onnx");
+            // current directory is RecognitionConsoleTest/bin/Debug/netcoreapp3.1 so we go 4 steps back
+            using var session = new InferenceSession(@"../../../../DigitRecognitionLibrary/mnist-8.onnx");
             using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = session.Run(inputs);
 
             var output = results.First().AsEnumerable<float>().ToArray();
@@ -152,3 +151,4 @@ namespace HandwrittenDigitRecognitionLib
         };
     }
 }
+

@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\HandwrittenDigitRecognitionLib\HandwrittenDigitRecognitionLib\HandwrittenDigitRecognitionLib.csproj" />
+    <ProjectReference Include="..\DigitRecognitionLibrary\DigitRecognitionLibrary.csproj" />
   </ItemGroup>
 
 </Project>
