@@ -15,10 +15,11 @@ namespace DigitRecognitionLibrary
     {
         public void Run(string dir)
         {
-            if (!Directory.Exists(dir))
+            if ((!Directory.Exists(dir)) || (Directory.GetFiles(dir, "*.png")).Length == 0)
             {
                 // current directory is RecognitionConsoleTest/bin/Debug/netcoreapp3.1 so we go 4 steps back
-                dir = @"../../../../DigitRecognitionLibrary";
+                dir = @"../../../../DigitRecognitionLibrary/DefaultImages";
+                Console.WriteLine("Using library with default images...");
             }
             string[] imagePaths = Directory.GetFiles(dir, "*.png");
             int count = imagePaths.Count();
@@ -59,7 +60,7 @@ namespace DigitRecognitionLibrary
                     //if (idx == 1) Thread.Sleep(2000); // this is how we can check if it really works parallel
                     if (!ctsForThreadPool.Token.IsCancellationRequested)
                     {
-                        OneImgRecognition(imagePaths[idx], idx);
+                        OneImgRecognition(imagePaths[idx]);
                     }
                     events[idx].Set();
                 }, i);
@@ -81,7 +82,7 @@ namespace DigitRecognitionLibrary
 
 
         public static object lockObj = new object();
-        private static void OneImgRecognition(string path, int idx)
+        private static void OneImgRecognition(string path)
         {
             using var image = Image.Load<Rgb24>(path);
             const int TargetWidth = 28;
@@ -127,7 +128,7 @@ namespace DigitRecognitionLibrary
                 Console.WriteLine(path);
                 // output probabilities across the 3 of 10 classes
                 foreach (var p in softmax
-                    .Select((x, idx) => new { Label = classLabels[idx], Confidence = x })
+                    .Select((x, i) => new { Label = classLabels[i], Confidence = x })
                     .OrderByDescending(x => x.Confidence)
                     .Take(3))
                     Console.WriteLine($"{p.Label} with confidence {p.Confidence}");
