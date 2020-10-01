@@ -32,7 +32,7 @@ namespace DigitRecognitionLibrary
                 Console.WriteLine("Type ESCAPE to stop recognition.");
                 while (true)
                 {
-                    // 1st way to break is to wait until the last image goes to recognition
+                    // 1st way to break is to wait until recognition is done
                     if (ctsForEscapeThread.Token.IsCancellationRequested)
                     {
                         break;
@@ -57,23 +57,20 @@ namespace DigitRecognitionLibrary
                 events[i] = new AutoResetEvent(false);
                 ThreadPool.QueueUserWorkItem(pi => {
                     int idx = Convert.ToInt32(pi);
-                    //if (idx == 1) Thread.Sleep(2000); // this is how we can check if it really works parallel
+                    //if (idx == 1) Thread.Sleep(3000); // this is how we can check if it really works parallel
                     if (!ctsForThreadPool.Token.IsCancellationRequested)
                     {
                         OneImgRecognition(imagePaths[idx]);
                     }
                     events[idx].Set();
                 }, i);
-                if (i == count - 1)
-                {
-                    ctsForEscapeThread.Cancel();
-                }
             }
 
             for (int i = 0; i < count; i++)
             {
                 events[i].WaitOne();
             }
+            ctsForEscapeThread.Cancel();
 
             t.Join();
             return;
