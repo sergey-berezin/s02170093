@@ -1,67 +1,87 @@
-﻿using System;
-using SixLabors.ImageSharp;
-using SixLabors.ImageSharp.PixelFormats;
-using System.Linq;
-using SixLabors.ImageSharp.Processing;
-using Microsoft.ML.OnnxRuntime.Tensors;
-using Microsoft.ML.OnnxRuntime;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-
-namespace DigitRecognitionLibrary
+﻿namespace DigitRecognitionLibrary
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.IO;
+    using System.Linq;
+    using System.Threading;
+    using Microsoft.ML.OnnxRuntime;
+    using Microsoft.ML.OnnxRuntime.Tensors;
+    using SixLabors.ImageSharp;
+    using SixLabors.ImageSharp.PixelFormats;
+    using SixLabors.ImageSharp.Processing;
+
+    public delegate void OutputHandler(object sender, Prediction pr);
+
+    public struct Prediction
+    {
+        public Prediction(string p, int l, float c)
+        {
+            this.Path = p;
+            this.Label = l;
+            this.Confidence = c;
+        }
+
+        public string Path { get; }
+
+        public int Label { get; }
+
+        public float Confidence { get; }
+    }
+
     public class Recognition
     {
+        private static InferenceSession session;
+
+        private static CancellationTokenSource cts = new CancellationTokenSource();
+
+        public Recognition()
+        {
+            session = new InferenceSession(@"../../../../DigitRecognitionLibrary/mnist-8.onnx");
+        }
+
+        public event OutputHandler OutputEvent;
+
+        public void StopRecognition()
+        {
+            cts.Cancel();
+        }
+
         public void Run(string dir)
         {
-            if ((!Directory.Exists(dir)) || (Directory.GetFiles(dir, "*.png")).Length == 0)
-            {
-                // current directory is RecognitionConsoleTest/bin/Debug/netcoreapp3.1 so we go 4 steps back
-                dir = @"../../../../DigitRecognitionLibrary/DefaultImages";
-                Console.WriteLine("Using library with default images...");
-            }
-            string[] imagePaths = Directory.GetFiles(dir, "*.png");
-            int count = imagePaths.Count();
-            var events = new AutoResetEvent[count];
+            cts = new CancellationTokenSource();
 
-            CancellationTokenSource ctsForThreadPool = new CancellationTokenSource();
-            CancellationTokenSource ctsForEscapeThread = new CancellationTokenSource();
-            var t = new Thread(() =>
+            if (!Directory.Exists(dir))
             {
-                Console.WriteLine("Type ESCAPE to stop recognition.");
-                while (true)
-                {
-                    // 1st way to break is to wait until recognition is done
-                    if (ctsForEscapeThread.Token.IsCancellationRequested)
-                    {
-                        break;
-                    }
-                    // 2nd way to break is to press ESCAPE and stop recognition
-                    var check = Console.ReadKey();
-                    if (check.Key == ConsoleKey.Escape)
-                    {
-                        ctsForThreadPool.Cancel();
-                        break;
-                    }
-                    else
-                    {
-                        Thread.Sleep(0);
-                    }
-                }
-            });
-            t.Start();
+                dir = @"../../../../DigitRecognitionLibrary/DefaultImages";
+                Trace.WriteLine("Using library with default images...");
+            }
+
+            string[] imagePaths = Directory.GetFiles(dir).Where(s => s.EndsWith(".png") || s.EndsWith(".jpg") || s.EndsWith(".bmp") || s.EndsWith(".gif")).ToArray();
+            int count = imagePaths.Count();
+            if (count == 0)
+            {
+                Trace.WriteLine("Your directory is empty.");
+                return;
+            }
+
+            var events = new AutoResetEvent[count];
 
             for (int i = 0; i < count; i++)
             {
                 events[i] = new AutoResetEvent(false);
-                ThreadPool.QueueUserWorkItem(pi => {
+                ThreadPool.QueueUserWorkItem(
+                pi =>
+                {
                     int idx = Convert.ToInt32(pi);
-                    //if (idx == 1) Thread.Sleep(3000); // this is how we can check if it really works parallel
-                    if (!ctsForThreadPool.Token.IsCancellationRequested)
+
+                    if (!cts.Token.IsCancellationRequested)
                     {
-                        OneImgRecognition(imagePaths[idx]);
+                        Prediction output = OneImgRecognition(imagePaths[idx]);
+                        this.OutputEvent?.Invoke(this, output);
                     }
+
                     events[idx].Set();
                 }, i);
             }
@@ -70,16 +90,11 @@ namespace DigitRecognitionLibrary
             {
                 events[i].WaitOne();
             }
-            ctsForEscapeThread.Cancel();
 
-            t.Join();
             return;
         }
 
-
-
-        public static object lockObj = new object();
-        private static void OneImgRecognition(string path)
+        private static Prediction OneImgRecognition(string path)
         {
             using var image = Image.Load<Rgb24>(path);
             const int TargetWidth = 28;
@@ -90,7 +105,7 @@ namespace DigitRecognitionLibrary
                 x.Resize(new ResizeOptions
                 {
                     Size = new Size(TargetWidth, TargetHeight),
-                    Mode = ResizeMode.Crop
+                    Mode = ResizeMode.Crop,
                 });
             });
 
@@ -107,46 +122,20 @@ namespace DigitRecognitionLibrary
             }
 
             var inputs = new List<NamedOnnxValue>
-                    { 
-                        // we can see input name in the viewer for nn called Netron
-                        NamedOnnxValue.CreateFromTensor("Input3", input)
-                    };
+            {
+                NamedOnnxValue.CreateFromTensor("Input3", input),
+            };
 
-            // current directory is RecognitionConsoleTest/bin/Debug/netcoreapp3.1 so we go 4 steps back
-            using var session = new InferenceSession(@"../../../../DigitRecognitionLibrary/mnist-8.onnx");
             using IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results = session.Run(inputs);
 
             var output = results.First().AsEnumerable<float>().ToArray();
             var sum = output.Sum(x => (float)Math.Exp(x));
             var softmax = output.Select(x => (float)Math.Exp(x) / sum);
 
-            lock (lockObj)
-            {
-                Console.WriteLine(path);
-                // output probabilities across the 3 of 10 classes
-                foreach (var p in softmax
-                    .Select((x, i) => new { Label = classLabels[i], Confidence = x })
-                    .OrderByDescending(x => x.Confidence)
-                    .Take(3))
-                    Console.WriteLine($"{p.Label} with confidence {p.Confidence}");
-            }
+            float confidence = softmax.Max();
+            int label = softmax.ToList().IndexOf(confidence);
+
+            return new Prediction(path, label, confidence);
         }
-
-
-
-        public static readonly string[] classLabels = new[]
-        {
-            "0",
-            "1",
-            "2",
-            "3",
-            "4",
-            "5",
-            "6",
-            "7",
-            "8",
-            "9"
-        };
     }
 }
-
