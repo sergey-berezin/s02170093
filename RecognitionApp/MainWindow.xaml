@@ -7,12 +7,6 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="1000" >
 
-    <Window.Resources>
-        <local:ObsImgCollection x:Key="key_OIC"/>
-        <local:ObsLabelCollection x:Key="key_OLC"/>
-        <local:ObsOneLabelCollection x:Key="key_OOLC"/>
-    </Window.Resources>
-
     <Window.CommandBindings>
         <CommandBinding Command = "ApplicationCommands.Open"
                         Executed= "OpenCommandHandler"/>
@@ -28,7 +22,7 @@
         <Button Content="Open" Command="ApplicationCommands.Open" CommandParameter="From Button" HorizontalAlignment="Left" Margin="32,10,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
         <Button Content="Start" Command="{x:Static local:MainWindow.Start}" CommandParameter="From Button"  HorizontalAlignment="Left" Margin="32,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
         <Button Content="Stop" Command="{x:Static local:MainWindow.Stop}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="181,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
-        <ListBox ItemsSource="{Binding Source={StaticResource key_OIC}}" Margin="500,10,100,29">
+        <ListBox x:Name="LbOIC"  Margin="500,10,100,29">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel>
@@ -43,7 +37,7 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <ListBox x:Name="LbOLC" ItemsSource="{Binding Source={StaticResource key_OLC}}" SelectionChanged="LbOLC_SelectionChanged" Margin="94,122,662,273">
+        <ListBox x:Name="LbOLC" SelectionChanged="LbOLC_SelectionChanged" Margin="94,122,662,273">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -56,7 +50,7 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <ListBox x:Name="LbOneLabel" ItemsSource="{Binding Source={StaticResource key_OOLC}}" Margin="94,346,662,29">
+        <ListBox x:Name="LbOneLabel" Margin="94,346,662,29">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Image Source="{Binding Image}" HorizontalAlignment="Center" Stretch="Uniform" Width="28" Height="28"/>

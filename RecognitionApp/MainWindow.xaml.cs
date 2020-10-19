@@ -35,32 +35,44 @@
         {
             InitializeComponent();
 
-            ImgCollection = FindResource("key_OIC") as ObsImgCollection;
+            ImgCollection = new ObservableCollection<ImgInf>();
+            Binding BndImgColl = new Binding();
+            BndImgColl.Source = ImgCollection;
+            LbOIC.SetBinding(ItemsControl.ItemsSourceProperty, BndImgColl);
 
-            LabelsCollection = FindResource("key_OLC") as ObsLabelCollection;
+            LabelsCollection = new ObservableCollection<LabelInf>();
+            Binding BndLabelsColl = new Binding();
+            BndLabelsColl.Source = LabelsCollection;
+            LbOLC.SetBinding(ItemsControl.ItemsSourceProperty, BndLabelsColl);
             for (int i = 0; i < 10; i++)
             {
                 LabelsCollection.Add(new LabelInf() { Label = i, Count = 0 });
             }
 
-            OneLabelCollection = FindResource("key_OOLC") as ObsOneLabelCollection;
+            OneLabelCollection = new ObservableCollection<OneLabel>();
+            Binding BndOneLabelColl = new Binding();
+            BndOneLabelColl.Source = OneLabelCollection;
+            LbOneLabel.SetBinding(ItemsControl.ItemsSourceProperty, BndOneLabelColl);
         }
 
         private Recognition R = new Recognition();
-        private ObsImgCollection ImgCollection = new ObsImgCollection();
-        private ObsLabelCollection LabelsCollection = new ObsLabelCollection();
-        private ObsOneLabelCollection OneLabelCollection = new ObsOneLabelCollection();
+        private ObservableCollection<ImgInf> ImgCollection;
+        private ObservableCollection<LabelInf> LabelsCollection;
+        private ObservableCollection<OneLabel> OneLabelCollection;
 
         private string DirPath { get; set; }
 
         private void OutputHandler(object sender, Prediction pr)
         {
-            ImgInf img = ImgCollection.First(i => i.Path == pr.Path);
-            img.Label = pr.Label;
-            img.Confidence = pr.Confidence;
+            Dispatcher.BeginInvoke(new Action(() =>
+            {
+                ImgInf img = ImgCollection.First(i => i.Path == pr.Path);
+                img.Label = pr.Label;
+                img.Confidence = pr.Confidence;
 
-            LabelInf lbl = LabelsCollection.First(i => i.Label == img.Label);
-            lbl.Count++;
+                LabelInf lbl = LabelsCollection.First(i => i.Label == img.Label);
+                lbl.Count++;
+            }));
         }
 
         private void OpenCommandHandler(object sender, ExecutedRoutedEventArgs e)
@@ -146,8 +158,6 @@
         }
     }
 
-    public class ObsImgCollection: ObservableCollection<ImgInf> { }
-
     public class ImgInf: INotifyPropertyChanged
     {
         private int l;
@@ -188,8 +198,6 @@
         }
     }
 
-    public class ObsLabelCollection : ObservableCollection<LabelInf> { }
-
     public class LabelInf : INotifyPropertyChanged
     {
         private int c;
@@ -212,8 +220,6 @@
             }
         }
     }
-
-    public class ObsOneLabelCollection : ObservableCollection<OneLabel> { }
 
     public class OneLabel : INotifyPropertyChanged
     {
