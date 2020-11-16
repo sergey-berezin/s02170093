@@ -58,6 +58,7 @@
             LbOneLabel.SetBinding(ItemsControl.ItemsSourceProperty, BndOneLabelColl);
 
             LibContext = new LibraryContext();
+            lockObj = new object();
         }
 
         private Recognition R = new Recognition();
@@ -65,6 +66,7 @@
         private ObservableCollection<LabelInf> LabelsCollection;
         private ObservableCollection<OneLabel> OneLabelCollection;
         private LibraryContext LibContext;
+        private object lockObj;
 
         private string DirPath { get; set; }
 
@@ -80,7 +82,13 @@
                 lbl.Count++;
                 lbl.CountInDb++;
 
-                LibContext.AddResults(img.Path, img.Label, img.Confidence);
+                ThreadPool.QueueUserWorkItem(new WaitCallback(param =>
+                {
+                    lock (lockObj)
+                    {
+                        LibContext.AddResults(img.Path, img.Label, img.Confidence);
+                    }
+                }));
             }));
         }
 
