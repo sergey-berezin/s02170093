@@ -4,6 +4,7 @@
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.ComponentModel;
+    using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Runtime.CompilerServices;
@@ -27,9 +28,11 @@
     {
         public static RoutedCommand Start = new RoutedCommand("Start", typeof(MainWindow));
         public static RoutedCommand Stop = new RoutedCommand("Stop", typeof(MainWindow));
+        public static RoutedCommand ClearDb = new RoutedCommand("ClearDb", typeof(MainWindow));
 
         private bool isDirPathChosen = false;
-        private bool isRecognising = false;
+        private bool isProcessing = false;
+        private bool isClearingDb = false;
 
         public MainWindow()
         {
@@ -46,19 +49,22 @@
             LbOLC.SetBinding(ItemsControl.ItemsSourceProperty, BndLabelsColl);
             for (int i = 0; i < 10; i++)
             {
-                LabelsCollection.Add(new LabelInf() { Label = i, Count = 0 });
+                LabelsCollection.Add(new LabelInf() { Label = i, Count = 0, CountInDb = 0 });
             }
 
             OneLabelCollection = new ObservableCollection<OneLabel>();
             Binding BndOneLabelColl = new Binding();
             BndOneLabelColl.Source = OneLabelCollection;
             LbOneLabel.SetBinding(ItemsControl.ItemsSourceProperty, BndOneLabelColl);
+
+            LibContext = new LibraryContext();
         }
 
         private Recognition R = new Recognition();
         private ObservableCollection<ImgInf> ImgCollection;
         private ObservableCollection<LabelInf> LabelsCollection;
         private ObservableCollection<OneLabel> OneLabelCollection;
+        private LibraryContext LibContext;
 
         private string DirPath { get; set; }
 
@@ -72,6 +78,9 @@
 
                 LabelInf lbl = LabelsCollection.First(i => i.Label == img.Label);
                 lbl.Count++;
+                lbl.CountInDb++;
+
+                LibContext.AddResults(img.Path, img.Label, img.Confidence);
             }));
         }
 
@@ -87,11 +96,12 @@
 
         private void CanStartCommandHandler(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = isDirPathChosen && !isRecognising;
+            e.CanExecute = isDirPathChosen && !isProcessing && !isClearingDb;
         }
 
         private void StartCommandHandler(object sender, ExecutedRoutedEventArgs e)
         {
+            isProcessing = true;
             ImgCollection.Clear();
             foreach (LabelInf i in LabelsCollection)
             {
@@ -113,31 +123,72 @@
                             Confidence = -1,
                         });
                     }));
+
+                    Tuple<int, float, int> res = LibContext.FindResults(path);
+                    Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        if (res != null)
+                        {
+                            ImgInf img = ImgCollection.First(i => i.Path == path);
+                            img.Label = res.Item1;
+                            img.Confidence = res.Item2;
+
+                            LabelInf lbl = LabelsCollection.First(i => i.Label == img.Label);
+                            lbl.Count++;
+                            lbl.CountInDb = res.Item3;
+
+                            Trace.WriteLine("Reading results from database...");
+                        }
+                        else
+                        {
+                            Recognize(path);
+                            Trace.WriteLine("Recognizing results...");
+                        }
+                    }));
                 }
+
+                isProcessing = false;
             }));
-            Recognize();
         }
 
-        private void Recognize()
+        private void Recognize(string path)
         {
             ThreadPool.QueueUserWorkItem(new WaitCallback(param =>
             {
                 R = new Recognition();
                 R.OutputEvent += OutputHandler;
-                isRecognising = true;
-                R.Run(DirPath);
-                Dispatcher.BeginInvoke(new Action(() => isRecognising = false));
+                R.Run(path);
             }));
         }
 
         private void CanStopCommandHandler(object sender, CanExecuteRoutedEventArgs e)
         {
-            e.CanExecute = isRecognising;
+            e.CanExecute = isProcessing;
         }
 
         private void StopCommandHandler(object sender, ExecutedRoutedEventArgs e)
         {
             R.StopRecognition();
+        }
+
+        private void CanClearDbCommandHandler(object sender, CanExecuteRoutedEventArgs e)
+        {
+            e.CanExecute = !isProcessing;
+        }
+
+        private void ClearDbCommandHandler(object sender, ExecutedRoutedEventArgs e)
+        {
+            ThreadPool.QueueUserWorkItem(new WaitCallback(param =>
+            {
+                isClearingDb = true;
+                LibContext.ClearDb();
+                LibContext = new LibraryContext();
+                foreach (LabelInf i in LabelsCollection)
+                {
+                    i.CountInDb = 0;
+                }
+                isClearingDb = false;
+            }));
         }
 
         private void LbOLC_SelectionChanged(object sender, EventArgs e)
@@ -201,6 +252,7 @@
     public class LabelInf : INotifyPropertyChanged
     {
         private int c;
+        private int cdb;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -217,6 +269,20 @@
             {
                 c = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Count"));
+            }
+        }
+
+        public int CountInDb
+        {
+            get
+            {
+                return cdb;
+            }
+
+            set
+            {
+                cdb = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CountInDb"));
             }
         }
     }

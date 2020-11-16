@@ -38,7 +38,8 @@
 
         public Recognition()
         {
-            session = new InferenceSession(@"../../../../DigitRecognitionLibrary/mnist-8.onnx");
+            //session = new InferenceSession(@"../../../../DigitRecognitionLibrary/mnist-8.onnx");
+            session = new InferenceSession(@"../DigitRecognitionLibrary/mnist-8.onnx");
         }
 
         public event OutputHandler OutputEvent;
@@ -52,13 +53,24 @@
         {
             cts = new CancellationTokenSource();
 
-            if (!Directory.Exists(dir))
+            //if (!Directory.Exists(dir))
+            //{
+            //    dir = @"../../../../DigitRecognitionLibrary/DefaultImages";
+            //    Trace.WriteLine("Using library with default images...");
+            //}
+
+            string[] imagePaths;
+            try
             {
-                dir = @"../../../../DigitRecognitionLibrary/DefaultImages";
-                Trace.WriteLine("Using library with default images...");
+                imagePaths = Directory.GetFiles(dir).Where(s => s.EndsWith(".png") || s.EndsWith(".jpg") || s.EndsWith(".bmp") || s.EndsWith(".gif")).ToArray();
+            }
+            catch (IOException)
+            {
+                imagePaths = new string[1];
+                imagePaths[0] = dir;
+                Trace.WriteLine("Recognition of one image.");
             }
 
-            string[] imagePaths = Directory.GetFiles(dir).Where(s => s.EndsWith(".png") || s.EndsWith(".jpg") || s.EndsWith(".bmp") || s.EndsWith(".gif")).ToArray();
             int count = imagePaths.Count();
             if (count == 0)
             {
