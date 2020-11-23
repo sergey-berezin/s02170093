@@ -16,12 +16,16 @@
         <CommandBinding Command="{x:Static local:MainWindow.Stop}"
                         CanExecute="CanStopCommandHandler"
                         Executed="StopCommandHandler"/>
+        <CommandBinding Command="{x:Static local:MainWindow.ClearDb}"
+                        CanExecute="CanClearDbCommandHandler"
+                        Executed="ClearDbCommandHandler"/>
     </Window.CommandBindings>
 
     <Grid x:Name="MainGrid" Margin="0,0,0,0">
         <Button Content="Open" Command="ApplicationCommands.Open" CommandParameter="From Button" HorizontalAlignment="Left" Margin="32,10,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
         <Button Content="Start" Command="{x:Static local:MainWindow.Start}" CommandParameter="From Button"  HorizontalAlignment="Left" Margin="32,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
         <Button Content="Stop" Command="{x:Static local:MainWindow.Stop}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="181,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
+        <Button Content="ClearDb" Command="{x:Static local:MainWindow.ClearDb}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="331,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
         <ListBox x:Name="LbOIC"  Margin="500,10,100,29">
             <ListBox.ItemTemplate>
                 <DataTemplate>
@@ -45,7 +49,9 @@
                         <TextBlock Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Text=" ("/>
                         <TextBlock Text="{Binding Count, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text=" image(s) in the directory)"/>
+                        <TextBlock Text=" image(s) in the directory, "/>
+                        <TextBlock Text="{Binding CountInDb, UpdateSourceTrigger=PropertyChanged}"/>
+                        <TextBlock Text=" in db)"/>
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
