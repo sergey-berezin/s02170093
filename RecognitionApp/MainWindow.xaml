@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RecognitionApp"
         mc:Ignorable="d"
-        Title="MainWindow" Height="600" Width="1000" >
+        Title="MainWindow" Height="600" Width="1000">
 
     <Window.CommandBindings>
         <CommandBinding Command = "ApplicationCommands.Open"
@@ -19,14 +19,18 @@
         <CommandBinding Command="{x:Static local:MainWindow.ClearDb}"
                         CanExecute="CanClearDbCommandHandler"
                         Executed="ClearDbCommandHandler"/>
+        <CommandBinding Command="{x:Static local:MainWindow.GetStats}"
+                        CanExecute="CanGetStatsCommandHandler"
+                        Executed="GetStatsCommandHandler"/>
     </Window.CommandBindings>
 
     <Grid x:Name="MainGrid" Margin="0,0,0,0">
         <Button Content="Open" Command="ApplicationCommands.Open" CommandParameter="From Button" HorizontalAlignment="Left" Margin="32,10,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
-        <Button Content="Start" Command="{x:Static local:MainWindow.Start}" CommandParameter="From Button"  HorizontalAlignment="Left" Margin="32,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
-        <Button Content="Stop" Command="{x:Static local:MainWindow.Stop}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="181,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
-        <Button Content="ClearDb" Command="{x:Static local:MainWindow.ClearDb}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="331,74,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
-        <ListBox x:Name="LbOIC"  Margin="500,10,100,29">
+        <Button Content="Start" Command="{x:Static local:MainWindow.Start}" CommandParameter="From Button"  HorizontalAlignment="Left" Margin="176,10,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
+        <Button Content="Stop" Command="{x:Static local:MainWindow.Stop}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="176,54,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
+        <Button Content="ClearDb" Command="{x:Static local:MainWindow.ClearDb}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="331,10,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
+        <Button Content="GetStats" Command="{x:Static local:MainWindow.GetStats}" CommandParameter="FromButton" HorizontalAlignment="Left" Margin="331,54,0,0" VerticalAlignment="Top" Height="20" Width="100"/>
+        <ListBox x:Name="LbOIC"  Margin="500,42,100,10">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel>
@@ -41,7 +45,7 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <ListBox x:Name="LbOLC" SelectionChanged="LbOLC_SelectionChanged" Margin="94,122,662,273">
+        <ListBox x:Name="LbOLC" SelectionChanged="LbOLC_SelectionChanged" Margin="32,134,724,263">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Orientation="Horizontal">
@@ -49,19 +53,21 @@
                         <TextBlock Text="{Binding Label, UpdateSourceTrigger=PropertyChanged}"/>
                         <TextBlock Text=" ("/>
                         <TextBlock Text="{Binding Count, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text=" image(s) in the directory, "/>
-                        <TextBlock Text="{Binding CountInDb, UpdateSourceTrigger=PropertyChanged}"/>
-                        <TextBlock Text=" in db)"/>
+                        <TextBlock Text=" image(s) in the directory)"/>
                     </StackPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <ListBox x:Name="LbOneLabel" Margin="94,346,662,29">
+        <ListBox x:Name="LbOneLabel" Margin="331,134,569,263">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Image Source="{Binding Image}" HorizontalAlignment="Center" Stretch="Uniform" Width="28" Height="28"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+        <TextBlock x:Name="TbStats" HorizontalAlignment="Left" Margin="64,351,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="204" Width="212"/>
+        <TextBlock HorizontalAlignment="Left" Margin="500,12,0,0" Text="All Images in the Directory" TextWrapping="Wrap" VerticalAlignment="Top" Height="20" Width="400"/>
+        <TextBlock HorizontalAlignment="Left" Margin="32,100,0,0" Text="Amount of Images for each Label" TextWrapping="Wrap" VerticalAlignment="Top" Height="20" Width="244"/>
+        <TextBlock HorizontalAlignment="Left" Margin="298,100,0,0" Text="All Images of Selected Label" TextWrapping="Wrap" VerticalAlignment="Top" Height="20" Width="166"/>
     </Grid>
 </Window>
