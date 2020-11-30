@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
-namespace RecognitionApp.Migrations
+namespace DigitRecognitionLibrary.Migrations
 {
     public partial class init : Migration
     {

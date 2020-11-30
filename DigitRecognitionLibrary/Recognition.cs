@@ -34,12 +34,17 @@
     {
         private static InferenceSession session;
 
+        private LibraryContext LibContext;
+
+        private object lockObj;
+
         private static CancellationTokenSource cts = new CancellationTokenSource();
 
         public Recognition()
         {
-            //session = new InferenceSession(@"../../../../DigitRecognitionLibrary/mnist-8.onnx");
-            session = new InferenceSession(@"../DigitRecognitionLibrary/mnist-8.onnx");
+            session = new InferenceSession(@"..\DigitRecognitionLibrary\mnist-8.onnx");
+            LibContext = new LibraryContext();
+            lockObj = new object();
         }
 
         public event OutputHandler OutputEvent;
@@ -53,23 +58,13 @@
         {
             cts = new CancellationTokenSource();
 
-            //if (!Directory.Exists(dir))
-            //{
-            //    dir = @"../../../../DigitRecognitionLibrary/DefaultImages";
-            //    Trace.WriteLine("Using library with default images...");
-            //}
+            if (!Directory.Exists(dir))
+            {
+                dir = @"..\DigitRecognitionLibrary\DefaultImages";
+                Trace.WriteLine("Using library with default images...");
+            }
 
-            string[] imagePaths;
-            try
-            {
-                imagePaths = Directory.GetFiles(dir).Where(s => s.EndsWith(".png") || s.EndsWith(".jpg") || s.EndsWith(".bmp") || s.EndsWith(".gif")).ToArray();
-            }
-            catch (IOException)
-            {
-                imagePaths = new string[1];
-                imagePaths[0] = dir;
-                Trace.WriteLine("Recognition of one image.");
-            }
+            string[] imagePaths = Directory.GetFiles(dir).Where(s => s.EndsWith(".png") || s.EndsWith(".jpg") || s.EndsWith(".bmp") || s.EndsWith(".gif")).ToArray();
 
             int count = imagePaths.Count();
             if (count == 0)
@@ -83,18 +78,42 @@
             for (int i = 0; i < count; i++)
             {
                 events[i] = new AutoResetEvent(false);
+
                 ThreadPool.QueueUserWorkItem(
                 pi =>
                 {
                     int idx = Convert.ToInt32(pi);
 
-                    if (!cts.Token.IsCancellationRequested)
+                    Tuple<int, float> res;
+                    lock (lockObj)
                     {
-                        Prediction output = OneImgRecognition(imagePaths[idx]);
-                        this.OutputEvent?.Invoke(this, output);
+                        res = LibContext.FindResults(imagePaths[idx]);
                     }
 
-                    events[idx].Set();
+                    if (res != null)
+                    {
+                        if (!cts.Token.IsCancellationRequested)
+                        {
+                            Prediction output = new Prediction(imagePaths[idx], res.Item1, res.Item2);
+                            OutputEvent?.Invoke(this, output);
+                        }
+
+                        events[idx].Set();
+                    }
+                    else
+                    {
+                        if (!cts.Token.IsCancellationRequested)
+                        {
+                            Prediction output = OneImgRecognition(imagePaths[idx]);
+                            OutputEvent?.Invoke(this, output);
+                            lock (lockObj)
+                            {
+                                LibContext.AddResults(output.Path, output.Label, output.Confidence);
+                            }
+                        }
+
+                        events[idx].Set();
+                    }
                 }, i);
             }
 

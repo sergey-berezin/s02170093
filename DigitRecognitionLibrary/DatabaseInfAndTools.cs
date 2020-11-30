@@ -1,4 +1,4 @@
-﻿namespace RecognitionApp
+﻿namespace DigitRecognitionLibrary
 {
     using System;
     using System.Collections.Generic;
@@ -37,7 +37,8 @@
         public DbSet<ImageObj> ImageObjs { get; set; }
         public DbSet<Blob> ImageDetails { get; set; }
 
-        string dir = @"library.db";
+        private string dir = @"..\DigitRecognitionLibrary\library.db";
+        //string s = Directory.GetCurrentDirectory();
         protected override void OnConfiguring(DbContextOptionsBuilder o) => o.UseSqlite("Data Source = " + dir);
 
         public void ClearDb()
@@ -60,9 +61,9 @@
             SaveChanges();
         }
 
-        public Tuple<int, float, int> FindResults(string path)
+        public Tuple<int, float> FindResults(string path)
         {
-            Tuple<int, float, int> tmpInf = null;
+            Tuple<int, float> tmpInf = null;
             byte[] img = File.ReadAllBytes(path);
             ImageObj el;
             try
@@ -92,7 +93,7 @@
 
                     if (check)
                     {
-                        tmpInf = new Tuple<int, float, int>(el.LabelObject.Label, el.Confidence, el.LabelObject.StatCount);
+                        tmpInf = new Tuple<int, float>(el.LabelObject.Label, el.Confidence);
                     }
                 }
             }
