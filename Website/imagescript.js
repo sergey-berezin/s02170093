@@ -1,6 +1,5 @@
 let image = document.getElementById('image')
 let imgArray = new Array()
-let ifChosen = false
 let cur = 0
 
 $(async () => {
@@ -42,7 +41,6 @@ $(async () => {
 
                 image.src = imgArray[0]
                 cur = 0
-                ifChosen = true
             })
         })
     }
@@ -53,21 +51,17 @@ $(async () => {
 })
 
 function prev() {
-    if (ifChosen) {
-        --cur;
-        if (cur < 0)
-            cur = imgArray.length - 1;
+    --cur
+    if (cur < 0)
+        cur = imgArray.length - 1
 
-        image.src = imgArray[cur];
-    }
+    image.src = imgArray[cur]
 }
 
 function next() {
-    if (ifChosen) {
-        ++cur;
-        if (cur > imgArray.length - 1)
-            cur = 0;
+    ++cur
+    if (cur > imgArray.length - 1)
+        cur = 0
 
-        image.src = imgArray[cur];
-    }
+    image.src = imgArray[cur]
 }
