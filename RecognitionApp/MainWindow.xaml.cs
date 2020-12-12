@@ -15,6 +15,7 @@
     using System.Windows.Input;
     using System.Windows.Media.Imaging;
     using Newtonsoft.Json;
+    using Contracts;
 
     public partial class MainWindow : Window
     {
@@ -127,8 +128,8 @@
                             {
                                 Image = ToBitmapImage(Convert.FromBase64String(pr.Image)),
                                 Path = pr.Path,
-                                Label = Convert.ToInt32(pr.Label),
-                                Confidence = (float)Convert.ToDouble(pr.Confidence),
+                                Label = pr.Label,
+                                Confidence = pr.Confidence,
                             });
 
                             LabelInf lbl = LabelsCollection.First(i => i.Label == Convert.ToInt32(pr.Label));
@@ -228,7 +229,8 @@
                         string statsOutput = "Statistics:\n";
                         for (int i = 0; i < stats.Length; i++)
                         {
-                            statsOutput += stats[i] + "\n";
+                            string[] st = stats[i].Split(' ');
+                            statsOutput += "Label " + st[0] + " is " + st[1] + " time(s) in database.\n";
                         }
 
                         Dispatcher.BeginInvoke(new Action(() =>
@@ -375,13 +377,5 @@
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Image"));
             }
         }
-    }
-
-    public class TransferFile
-    {
-        public string Path { get; set; }
-        public string Label { get; set; }
-        public string Confidence { get; set; }
-        public string Image { get; set; }
     }
 }

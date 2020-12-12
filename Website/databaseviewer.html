@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+    <meta charset="utf-8"/>
+
+    <title>Super Duper Site</title>
+
+    <style type="text/css">
+        #content {
+            position: relative;
+        }
+
+        .cmcimg {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+    </style>
+
+</head>
+
+<body style="color:black; background-color:#D5E8EA">
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"
+            integrity="sha256-4+XzXVhsDmqanXGHaHvgh1gMQKX40OUvDEBTu8JcmNs="
+            crossorigin="anonymous"></script>
+
+    <div id="content" style="text-align: right">
+        <img id="cmc" src="cmc.png" alt="cmc" width="150" height="150" class="cmcimg"/>
+    </div>
+
+    <p><b>Доступные классы:</b></p>
+
+    <div id="radio"></div>
+
+    <script src="radioscript.js"></script>
+
+    <div></div>&nbsp;&nbsp;&nbsp;
+
+    <div style="text-align: center">
+        <button id="prev" onclick="prev()" hidden="hidden">
+            prev
+        </button>
+        <button id="next" onclick="next()" hidden="hidden">
+            next
+        </button>
+    </div>
+
+    <div></div>&nbsp;&nbsp;&nbsp;
+
+    <div style="text-align: center">
+        <img id="image" alt="Image will be loaded" width="56" height="56" hidden="hidden"/>
+    </div>
+
+    <script src="imagescript.js"></script>
+
+</body>
+
+</html>
