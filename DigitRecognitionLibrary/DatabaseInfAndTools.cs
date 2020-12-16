@@ -38,7 +38,7 @@
         public DbSet<Blob> ImageDetails { get; set; }
 
         private string dir = @"..\DigitRecognitionLibrary\library.db";
-        //string s = Directory.GetCurrentDirectory();
+
         protected override void OnConfiguring(DbContextOptionsBuilder o) => o.UseSqlite("Data Source = " + dir);
 
         public void ClearDb()
